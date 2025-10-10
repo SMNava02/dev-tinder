@@ -1,0 +1,22 @@
+{
+  "name": "dev-tinder",
+  "version": "1.0.0",
+  "description": "Backend - Tinder for software developers",
+  "keywords": [
+    "NodeJS",
+    "Backend",
+    "REST API",
+    "MicroService",
+    "MongoDB"
+  ],
+  "license": "ISC",
+  "author": "SM",
+  "type": "commonjs",
+  "main": "src/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
