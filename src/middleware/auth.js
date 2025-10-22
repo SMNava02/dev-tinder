@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/user");
 
 const userAuth = async (req, res, next) => {
   const jwtToken = req.cookies.token;
@@ -9,7 +10,9 @@ const userAuth = async (req, res, next) => {
   const decoded = await jwt.verify(jwtToken, "DEVT1NDER@1");
   console.log(`Decoded JWT: ${JSON.stringify(decoded)}`);
 
-  req.userId = decoded.userId;
+  // Extract the logged in user info
+  req.user = User.findById(decoded.userId);
+
   next();
 };
 
