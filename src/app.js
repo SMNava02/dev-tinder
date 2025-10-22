@@ -1,13 +1,16 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 const { connectToDB } = require("./config/database");
 const User = require("./models/user");
+const { userAuth } = require("./middleware/auth");
 
 const app = new express();
 
 app.use(express.json());
+app.use(cookieParser());
 
-//Create new user
 app.post("/signup", async (req, res) => {
   try {
     console.log(
@@ -31,77 +34,35 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-app.post("login", (req, res) => {
+app.post("/login", async (req, res) => {
   try {
-    console.log("Validating the user credentials for login");
+    console.log(
+      `Validating the user credentials for login: ${JSON.stringify(req.body)}`
+    );
     let { emailId, password } = req.body;
-    const user = User.find({ emailId });
+    const user = await User.findOne({ emailId });
+    console.log(`User found: ${user}`);
     isPasswordValid = bcrypt.compare(password, user?.password);
     if (!isPasswordValid) {
       throw new Error("Invalid Credentials");
     }
+    //Create a JWT token and add to the cookie
+    const token = jwt.sign({ userId: user._id }, "DEVT1NDER@1");
+    console.log(`token created: ${token}`);
+    res.cookie("token", token);
     res.send("Login Successfull");
   } catch (err) {
     res.send(`Invalid Credentials`);
   }
 });
 
-//Find user info by emailId
-app.get("/user", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    console.log(`Find user info for Email: ${req.body.emailId}`);
-    const userInfo = await User.find({ emailId: req.body.emailId });
-    res.send(userInfo);
+    const user = await User.find({ _id: req?.userId });
+    res.send(user);
   } catch (err) {
-    console.log(
-      `Unable to fetch user info for email: ${req.body.emailId} Error: ${err}`
-    );
-    res.status(400).send(`Unable to find user info: ${err.message}`);
-  }
-});
-
-//Find all users
-app.get("/feed", async (req, res) => {
-  try {
-    console.log(`Finding all users for feed`);
-    const userInfo = await User.find();
-    res.send(userInfo);
-  } catch (err) {
-    console.log(`Unable to fetch all users Error: ${err.message}`);
-    res.status(400).send(`Unable to find users: ${err.message}`);
-  }
-});
-
-app.delete("/user", async (req, res) => {
-  try {
-    console.log(`Deleting the user with Id: ${req.body.userId}`);
-    await User.findByIdAndDelete(userId);
-    res.send("User deleted successfully");
-  } catch (err) {
-    console.log(`Unable to delete user: ${err.message}`);
-    res.status(400).send(`Unable to delete user: ${err.message}`);
-  }
-});
-
-app.patch("/user/:userId", async (req, res) => {
-  try {
-    let userId = req.params.userId;
-    console.log(`Updating user with Id: ${userId}`);
-    // Add allowded user fields to be updated
-    const ALLOWED_UPDATES = ["photoUrl", "about", "skills", "age"];
-    let isUpdateAllowed = Object.keys(req.body).every((value) =>
-      value.includes(ALLOWED_UPDATES)
-    );
-    if (!isUpdateAllowed) {
-      throw new Error(
-        "Allowed fields for update are [photoUrl, about, skills, age]"
-      );
-    }
-    await User.findByIdAndUpdate(userId, req.body);
-    res.send("User updated successfully");
-  } catch (err) {
-    console.log(`Unable to update user: ${err.message}`);
-    res.status(400).send(`Unable to update user: ${err.message}`);
+    console.log(`Unable to fetch user profile Error: ${err.message}`);
+    res.status(400).send(`Unable to find user profile: ${err.message}`);
   }
 });
 

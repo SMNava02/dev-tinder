@@ -27,7 +27,7 @@ let userSchema = new mongoose.Schema(
         }
       },
     },
-    email: {
+    emailId: {
       type: String,
       required: true,
       validate(value) {
